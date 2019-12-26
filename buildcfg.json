@@ -1,0 +1,5 @@
+{
+	"resPath": "../Card/laya/assets",
+    "outputPath": "../Card/src/app/mod",
+    "fileName": "resconfig.ts"
+}

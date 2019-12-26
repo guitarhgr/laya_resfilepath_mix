@@ -1,112 +1,71 @@
-import fs from "fs";
-import path from 'path';
-
 // ============================= 导入
+import fs from 'fs';
+import path from 'path';
+import jsonFile from 'jsonfile';
+import { BuildCfg, Suffix2D, Suffix3D, SuffixCfg, IgnoreSuffix, FileType } from './types';
 
 // ============================= 类型
-enum EFile {
-    '2D'   = '2d',
-    '3D'   = '3d',
-    'JSON' = 'json'
-}
+
 
 // ============================= 常量
-const READ_PATH = 'E:\\Learn\\coder\\LayaProj\\Card\\laya\\assets';
-const WRITE_PATH = 'E:\\Learn\\coder\\LayaProj\\Card\\laya\\assets\\';
-
-// 后缀名
-const SUFFIX = {
-    // 配置
-    CFG: {
-        '.json': '.json '
-    },
-    // 资源
-    RES: {
-        '.jpg': '.jpg',
-        '.png': '.png' 
-    },
-    '3D': {
-        '.png': '.png',
-        '.ls': '.ls'
-    },
-    ATLAS: {
-        '.atlas': '.atlas'
-    }
+class Constants {
+    /**导出字符串 */
+    static exportStr: string = 'export default';
+    /**3d文件夹 */
+    static FLODER_3D: string = '3d';
+    /**配置文件夹 */
+    static FLODER_CFG: string = 'cfg';
+    /**忽略后缀 */
+    static IGNORE_SUFFIX: IgnoreSuffix[] = [IgnoreSuffix.rec, IgnoreSuffix.ts];
+    /**3D文件后缀名 */
+    static SUFFIX_3D: Suffix3D[] = [
+        Suffix3D.ls, Suffix3D.lh, Suffix3D.lm, Suffix3D.lmat, Suffix3D.lani,
+        Suffix3D.jpg, Suffix3D.png, Suffix3D.ltc, Suffix3D.ktx, Suffix3D.pvr
+    ];
+    /**2D文件后缀名 */
+    static SUFFIX_2D: Suffix2D[] = [Suffix2D.jpg, Suffix2D.png];
+    /**配置后缀名 */
+    static SUFFIX_CFG: SuffixCfg[] = [SuffixCfg.json];
 };
 
 // ============================= 变量
-let layaFilesJson:any = {};
+/**构建配置 */
+let buildCfg: BuildCfg;
+/**资源字符串 */
+let resConfigObj: any = {};
+/**写文件定时器id */
 let timer: NodeJS.Timeout;
 
 // ============================= 方法
 /**
- * 
- * @param obj 判断对象
- * @param val 对照值
+ * 入口
  */
-const isInObject = (obj: Object, val: string) => {
-    for (let k in obj) {
-        if (val.indexOf(k) >= 0) {
-            return true;
-        }
-    }
+const entry = () => {
+    // 初始化
+    init();
 
-    return false;
+    // 处理文件
+    readTargetFile(buildCfg.resPath, handleRes);
 };
 
 /**
- * 混合layajson
- * @param filePath 路径
+ * 初始化
  */
-const mixLayaJson = (filePath: string) => {
-    let splitArr: string[], len: number, fileName: string, fileSuffix: string, res: string, assetsIdx: number, type: EFile | null;
-
-    splitArr = filePath.split("\\");
-    len = splitArr.length;
-    
-    if (!len) return;
-
-    fileName = splitArr[len-1];
-    fileSuffix = fileName.substr(fileName.indexOf('.'));
-    res = '';
-    type = null;
-    
-
-    if (isInObject(SUFFIX.CFG, fileSuffix) && splitArr.indexOf('cfg') >= 0) {
-        assetsIdx = splitArr.indexOf('assets');
-        res = `${splitArr.slice(assetsIdx+1).join('/')}`;
-        type = EFile.JSON
-    }
-    else if (isInObject(SUFFIX.RES, fileSuffix)) {
-    // else if (isInObject(SUFFIX.RES, fileSuffix) && splitArr.indexOf('3d') < 0) {
-        assetsIdx = splitArr.indexOf('assets');
-
-        res = assetsIdx == len - 2 ? `res/${fileName.split('.')[0]}.atlas` :
-                                     `res/${splitArr.slice(assetsIdx+1, len-1).join('/')}.atlas`;
-        type = EFile["2D"];
-    }
-    else if (isInObject(SUFFIX["3D"], fileSuffix) && splitArr.indexOf('3d') >= 0) {
-        // TODO
-    }
-    else if (isInObject(SUFFIX.ATLAS, fileSuffix)) {
-        assetsIdx = splitArr.indexOf('assets');
-
-        res = `res/${splitArr.slice(assetsIdx+1).join('/')}`;
-        type = EFile["2D"];
-    }
-
-    if (res === '' || layaFilesJson[res]) return;
-
-    layaFilesJson[res] = { res, type };
-    
-    writeDataToFile(`${WRITE_PATH}resconfig.json`, layaFilesJson);
+const init = () => {
+    buildCfg = jsonFile.readFileSync('./buildcfg.json');
 };
 
-const readTargetFile = (filePath: string) => {
+/**
+ * 读取目标路径文件
+ * @param filePath 文件路径
+ * @param fileCB 操作文件回调
+ */
+const readTargetFile = (filePath: string, fileCB?: Function) => {
 
+    // 读取文件夹
     fs.readdir(filePath, (err: NodeJS.ErrnoException | null, files: string[]) => {
         if (err) {
-            console.warn(err);
+            console.warn(` err: ${err}`);
             return;
         }
 
@@ -115,46 +74,97 @@ const readTargetFile = (filePath: string) => {
 
             fs.stat(fileDir, (err: NodeJS.ErrnoException | null, stats: fs.Stats) => {
                 if (err) {
-                    console.warn(err);
+                    console.warn(` err: ${err}`);
                     return;
                 }
 
                 if (stats.isFile()) {
-                    // console.log(fileDir);
-                    mixLayaJson(fileDir);
-
+                    fileCB && fileCB(fileDir.replace(/\\/g, '/'));
                 }
                 else if (stats.isDirectory()) {
-                    readTargetFile(fileDir);
+                    readTargetFile(fileDir, fileCB);
                 }
             });
         });
     });
 };
 
+/**
+ * 处理资源
+ * @param fileDir 文件全路径
+ */
+const handleRes = (fileDir: string) => {
+    const cutDir: string = fileDir.substr(`${buildCfg.resPath}/`.length);
+    const suffix: any = cutDir.substr(cutDir.lastIndexOf('.')+1);
+    let resPath: string = '';
+    let type: FileType | null = null; 
+
+    // // 忽略文件
+    // if (Constants.IGNORE_SUFFIX.includes(suffix)) {
+
+    // }
+    // 3d文件
+    if (cutDir.includes(`${Constants.FLODER_3D}/`) && Constants.SUFFIX_3D.includes(suffix)) {
+        resPath = cutDir;
+        type = FileType["3d"];
+    }
+    // 配置文件
+    else if (cutDir.includes(`${Constants.FLODER_CFG}/`) && Constants.SUFFIX_CFG.includes(suffix)) {
+        resPath = cutDir;
+        type = FileType['cfg'];
+    }
+    // 2d文件
+    else if (Constants.SUFFIX_2D.includes(suffix)) {
+        const lastIdx = cutDir.lastIndexOf('/');
+
+        if (lastIdx >= 0) {
+            resPath = `res/atlas/${cutDir.substr(0, lastIdx)}.atlas`;
+        } else {
+            const splitArr: string[] = cutDir.split('/');
+            const fileName = splitArr[splitArr.length-1];
+
+            resPath = `res/${fileName.split('.')[0]}.atlas`;
+        }
+
+        type = FileType["2d"];
+    }
+
+    if (resPath === '' || resConfigObj[resPath]) return;
+
+    resConfigObj[resPath] = [resPath, type];
+
+    writeResConfig();
+};
+
+const writeResConfig = () => {
+    timer && clearTimeout(timer);
+
+    timer = setTimeout(() => {
+        const resconfigStr = `${Constants.exportStr} ${JSON.stringify(resConfigObj)}`;
+
+        writeDataToFile(`${buildCfg.outputPath}/${buildCfg.fileName}`, resconfigStr, false);
+    }, 500);
+};
 
 /**
  * 将数据写入文件
  * @param path 
  * @param exportData 
  */
-const writeDataToFile = (path: string, exportData: any) => {
-    timer && clearTimeout(timer);
-
-    timer = setTimeout(() => {
-        fs.writeFile(path, JSON.stringify(exportData), 'utf-8', (err: NodeJS.ErrnoException | null) => {
-            if (err) {
-                console.log(err);
-                return;
-            }
+const writeDataToFile = (path: string, data: any, isStringify = true) => {
     
-            // exportData = null;
-            
-            console.log('success');
-        });
-    }, 500);
-
+    fs.writeFile(path, isStringify ? JSON.stringify(data) : data, 'utf-8', (err: NodeJS.ErrnoException | null) => {
+        if (err) {
+            console.log(` err:: ${err}`);
+            return;
+        }
+        
+        console.log(` log:: build to [${path}] success`);
+    });
 };
-// ============================= 立即执行
 
-readTargetFile(READ_PATH);
+
+
+
+// ============================= 立即执行
+entry();

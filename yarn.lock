@@ -2,6 +2,18 @@
 # yarn lockfile v1
 
 
+"@types/jsonfile@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.npm.taobao.org/@types/jsonfile/download/@types/jsonfile-5.0.0.tgz#d55441a0a2ef59b10adb424850793eb322e4923d"
+  integrity sha1-1VRBoKLvWbEK20JIUHk+syLkkj0=
+  dependencies:
+    "@types/node" "*"
+
+"@types/node@*":
+  version "13.1.0"
+  resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-13.1.0.tgz#225cbaac5fdb2b9ac651b02c070d8aa3c37cc812"
+  integrity sha1-Ily6rF/bK5rGUbAsBw2Ko8N8yBI=
+
 "@types/node@^12.12.21":
   version "12.12.21"
   resolved "https://registry.npm.taobao.org/@types/node/download/@types/node-12.12.21.tgz#aa44a6363291c7037111c47e4661ad210aded23f"
@@ -283,7 +295,7 @@ got@^6.7.1:
     unzip-response "^2.0.1"
     url-parse-lax "^1.0.0"
 
-graceful-fs@^4.1.11, graceful-fs@^4.1.2:
+graceful-fs@^4.1.11, graceful-fs@^4.1.2, graceful-fs@^4.1.6:
   version "4.2.3"
   resolved "https://registry.npm.taobao.org/graceful-fs/download/graceful-fs-4.2.3.tgz#4a12ff1b60376ef09862c2093edd908328be8423"
   integrity sha1-ShL/G2A3bvCYYsIJPt2Qgyi+hCM=
@@ -393,6 +405,15 @@ isexe@^2.0.0:
   version "2.0.0"
   resolved "https://registry.npm.taobao.org/isexe/download/isexe-2.0.0.tgz#e8fbf374dc556ff8947a10dcb0572d633f2cfa10"
   integrity sha1-6PvzdNxVb/iUehDcsFctYz8s+hA=
+
+jsonfile@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.npm.taobao.org/jsonfile/download/jsonfile-5.0.0.tgz#e6b718f73da420d612823996fdf14a03f6ff6922"
+  integrity sha1-5rcY9z2kINYSgjmW/fFKA/b/aSI=
+  dependencies:
+    universalify "^0.1.2"
+  optionalDependencies:
+    graceful-fs "^4.1.6"
 
 latest-version@^3.0.0:
   version "3.1.0"
@@ -699,6 +720,11 @@ unique-string@^1.0.0:
   integrity sha1-nhBXzKhRq7kzmPizOuGHuZyuwRo=
   dependencies:
     crypto-random-string "^1.0.0"
+
+universalify@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.npm.taobao.org/universalify/download/universalify-0.1.2.tgz#b646f69be3942dabcecc9d6639c80dc105efaa66"
+  integrity sha1-tkb2m+OULavOzJ1mOcgNwQXvqmY=
 
 unzip-response@^2.0.1:
   version "2.0.1"

@@ -1,5 +1,5 @@
 {
-  "name": "ReadFile",
+  "name": "depend_build",
   "version": "1.0.0",
   "description": "",
   "main": "main.js",
@@ -16,5 +16,9 @@
     "nodemon": "^2.0.2",
     "ts-node": "^8.5.4",
     "typescript": "^3.7.4"
+  },
+  "dependencies": {
+    "@types/jsonfile": "^5.0.0",
+    "jsonfile": "^5.0.0"
   }
 }
