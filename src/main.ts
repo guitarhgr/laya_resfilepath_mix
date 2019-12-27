@@ -2,7 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import jsonFile from 'jsonfile';
-import { BuildCfg, Suffix2D, Suffix3D, SuffixCfg, IgnoreSuffix, FileType } from './types';
+import { BuildCfg, Suffix2D, Suffix3D, SuffixCfg, IgnoreSuffix, LoadType, PathType, ResNode } from './types';
 
 // ============================= 类型
 
@@ -10,7 +10,7 @@ import { BuildCfg, Suffix2D, Suffix3D, SuffixCfg, IgnoreSuffix, FileType } from 
 // ============================= 常量
 class Constants {
     /**导出字符串 */
-    static exportStr: string = 'export default';
+    static EXPORT_STR: string = 'export default';
     /**3d文件夹 */
     static FLODER_3D: string = '3d';
     /**配置文件夹 */
@@ -32,7 +32,8 @@ class Constants {
 /**构建配置 */
 let buildCfg: BuildCfg;
 /**资源字符串 */
-let resConfigObj: any = {};
+// let root: any = {};
+let root: any = null;
 /**写文件定时器id */
 let timer: NodeJS.Timeout;
 
@@ -97,7 +98,7 @@ const handleRes = (fileDir: string) => {
     const cutDir: string = fileDir.substr(`${buildCfg.resPath}/`.length);
     const suffix: any = cutDir.substr(cutDir.lastIndexOf('.')+1);
     let resPath: string = '';
-    let type: FileType | null = null; 
+    let loadType: LoadType = LoadType.LOAD; 
 
     // // 忽略文件
     // if (Constants.IGNORE_SUFFIX.includes(suffix)) {
@@ -106,12 +107,12 @@ const handleRes = (fileDir: string) => {
     // 3d文件
     if (cutDir.includes(`${Constants.FLODER_3D}/`) && Constants.SUFFIX_3D.includes(suffix)) {
         resPath = cutDir;
-        type = FileType["3d"];
+        loadType = LoadType.CREATE;
     }
     // 配置文件
     else if (cutDir.includes(`${Constants.FLODER_CFG}/`) && Constants.SUFFIX_CFG.includes(suffix)) {
         resPath = cutDir;
-        type = FileType['cfg'];
+        loadType = LoadType.LOAD;
     }
     // 2d文件
     else if (Constants.SUFFIX_2D.includes(suffix)) {
@@ -126,21 +127,97 @@ const handleRes = (fileDir: string) => {
             resPath = `res/${fileName.split('.')[0]}.atlas`;
         }
 
-        type = FileType["2d"];
+        loadType = LoadType.LOAD;
     }
 
-    if (resPath === '' || resConfigObj[resPath]) return;
+    // if (resPath === '' || root[resPath]) return;
+    
+    // root[resPath] = [type];
+    
+    // writeResConfig();
+    
+    if (resPath === '') return;
 
-    resConfigObj[resPath] = [resPath, type];
-
+    PathToTree.pathToTree(resPath, loadType);
     writeResConfig();
 };
 
+/**
+ * 根据字符串文件相对路径生成文件数结构
+ */
+class PathToTree {
+    public static getType = (name: string, fileName: string): PathType => {
+        if (name === fileName) {
+            return 'document';
+        }
+
+        return 'folder';
+    };
+
+    public static pathToTree = (path: string, loadType: LoadType) => {
+        root = root || {
+            n: '',
+            u: '',
+            t: 'f',
+            lf: '',
+            cn: []
+        }
+
+        PathToTree.addPath(root, path, loadType);
+    };
+
+    public static addPath = (root: any, path: string, loadType: LoadType) => {
+        let url: string = '';
+        let pathArr: string[] = path.split('/');
+
+        pathArr.forEach((name: string) => {
+            let flag: boolean = true;
+            let children: ResNode[] = root.cn;
+
+            url = `${url}${url ? '/' : ''}${name}`;
+
+            for (let i = 0; i < children.length; i++) {
+                const node:ResNode = children[i];
+
+                if (node.n === name) {
+                    root = node;
+                    flag = false;
+                    break;
+                }
+            }
+
+            if (flag) {
+                const type: PathType = PathToTree.getType(name, pathArr[pathArr.length-1]);
+                const newNode: ResNode = {
+                    n: name,
+                    t: type === 'document' ? 'd' : 'f',
+                    // u: url,
+                    cn: []
+                };
+
+                if (type === 'document') {
+                    // 加载类型
+                    newNode.lf = loadType === LoadType.CREATE ? 'c' : 'l';
+                }
+
+                root.cn.push(newNode);
+
+                root = newNode;
+            }
+        });
+
+    };
+}
+
+
+/**
+ * 写配置文件
+ */
 const writeResConfig = () => {
     timer && clearTimeout(timer);
 
     timer = setTimeout(() => {
-        const resconfigStr = `${Constants.exportStr} ${JSON.stringify(resConfigObj)}`;
+        const resconfigStr = `${Constants.EXPORT_STR} ${JSON.stringify(root)}`;
 
         writeDataToFile(`${buildCfg.outputPath}/${buildCfg.fileName}`, resconfigStr, false);
     }, 500);
@@ -162,9 +239,6 @@ const writeDataToFile = (path: string, data: any, isStringify = true) => {
         console.log(` log:: build to [${path}] success`);
     });
 };
-
-
-
 
 // ============================= 立即执行
 entry();

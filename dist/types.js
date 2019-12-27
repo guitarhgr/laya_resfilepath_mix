@@ -24,6 +24,8 @@ var Suffix3D;
     Suffix3D["lmat"] = "lmat";
     /**动画数据文件 */
     Suffix3D["lani"] = "lani";
+    /**蒙皮骨骼动画数据 */
+    Suffix3D["lav"] = "lav";
     /**贴图文件 */
     Suffix3D["jpg"] = "jpg";
     Suffix3D["png"] = "png";
@@ -50,11 +52,35 @@ var SuffixCfg;
     SuffixCfg["json"] = "json";
 })(SuffixCfg = exports.SuffixCfg || (exports.SuffixCfg = {}));
 ;
-var FileType;
-(function (FileType) {
-    FileType["2d"] = "2d";
-    FileType["3d"] = "3d";
-    FileType["cfg"] = "cfg";
-})(FileType = exports.FileType || (exports.FileType = {}));
+/**
+ * 加载类型
+ */
+var LoadType;
+(function (LoadType) {
+    LoadType["LOAD"] = "load";
+    LoadType["CREATE"] = "create";
+})(LoadType = exports.LoadType || (exports.LoadType = {}));
 ;
+;
+/**字段映射 */
+exports.FieldMap = {
+    /**名称 */
+    n: 'name',
+    /**url */
+    u: 'url',
+    /**类型 */
+    t: 'type',
+    /**文件夹 */
+    f: 'folder',
+    /**文件 */
+    d: 'document',
+    /**加载方法 */
+    lf: 'loadfn',
+    /**create */
+    c: 'create',
+    /**load */
+    l: 'load',
+    /**子节点 */
+    cn: 'children',
+};
 //# sourceMappingURL=types.js.map

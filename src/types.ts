@@ -38,6 +38,8 @@ export enum Suffix3D {
     lmat = 'lmat',
     /**动画数据文件 */
     lani = 'lani',
+    /**蒙皮骨骼动画数据 */
+    lav = 'lav',
     /**贴图文件 */
     jpg = 'jpg',
     png = 'png',
@@ -62,8 +64,57 @@ export enum SuffixCfg {
     json = 'json',
 };
 
-export enum FileType {
-    '2d' = '2d',
-    '3d' = '3d',
-    'cfg' = 'cfg'
+/**
+ * 加载类型
+ */
+export enum LoadType {
+    LOAD = 'load',
+    CREATE = 'create',
+};
+
+export type PathType = 'document' | 'folder';
+
+export interface ResNode {
+    /**
+     * name 名称
+     */
+    n: string;
+    /**
+     * url
+     */
+    u?: string;
+    /**
+     * type 类型 f: 文件夹 d: 文件
+     */
+    t: string;
+    /**
+     * loadfn 加载方方法 c: create l: load
+     */
+    lf?: string;
+    /**
+     * 子节点
+     */
+    cn: ResNode[]
+};
+
+/**字段映射 */
+export const FieldMap = {
+    /**名称 */
+    n : 'name',
+    /**url */
+    u : 'url',
+    /**类型 */
+    t : 'type',
+    /**文件夹 */
+    f : 'folder',
+    /**文件 */
+    d : 'document',
+    /**加载方法 */
+    lf: 'loadfn',
+    /**create */
+    c : 'create',
+    /**load */
+    l : 'load',
+    /**子节点 */
+    cn: 'children', 
 };

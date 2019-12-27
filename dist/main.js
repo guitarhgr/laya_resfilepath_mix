@@ -14,7 +14,7 @@ var Constants = /** @class */ (function () {
     function Constants() {
     }
     /**导出字符串 */
-    Constants.exportStr = 'export default';
+    Constants.EXPORT_STR = 'export default';
     /**3d文件夹 */
     Constants.FLODER_3D = '3d';
     /**配置文件夹 */
@@ -37,7 +37,8 @@ var Constants = /** @class */ (function () {
 /**构建配置 */
 var buildCfg;
 /**资源字符串 */
-var resConfigObj = {};
+// let root: any = {};
+var root = null;
 /**写文件定时器id */
 var timer;
 // ============================= 方法
@@ -93,19 +94,19 @@ var handleRes = function (fileDir) {
     var cutDir = fileDir.substr((buildCfg.resPath + "/").length);
     var suffix = cutDir.substr(cutDir.lastIndexOf('.') + 1);
     var resPath = '';
-    var type = null;
+    var loadType = types_1.LoadType.LOAD;
     // // 忽略文件
     // if (Constants.IGNORE_SUFFIX.includes(suffix)) {
     // }
     // 3d文件
     if (cutDir.includes(Constants.FLODER_3D + "/") && Constants.SUFFIX_3D.includes(suffix)) {
         resPath = cutDir;
-        type = types_1.FileType["3d"];
+        loadType = types_1.LoadType.CREATE;
     }
     // 配置文件
     else if (cutDir.includes(Constants.FLODER_CFG + "/") && Constants.SUFFIX_CFG.includes(suffix)) {
         resPath = cutDir;
-        type = types_1.FileType['cfg'];
+        loadType = types_1.LoadType.LOAD;
     }
     // 2d文件
     else if (Constants.SUFFIX_2D.includes(suffix)) {
@@ -118,17 +119,79 @@ var handleRes = function (fileDir) {
             var fileName = splitArr[splitArr.length - 1];
             resPath = "res/" + fileName.split('.')[0] + ".atlas";
         }
-        type = types_1.FileType["2d"];
+        loadType = types_1.LoadType.LOAD;
     }
-    if (resPath === '' || resConfigObj[resPath])
+    // if (resPath === '' || root[resPath]) return;
+    // root[resPath] = [type];
+    // writeResConfig();
+    if (resPath === '')
         return;
-    resConfigObj[resPath] = [resPath, type];
+    PathToTree.pathToTree(resPath, loadType);
     writeResConfig();
 };
+/**
+ * 根据字符串文件相对路径生成文件数结构
+ */
+var PathToTree = /** @class */ (function () {
+    function PathToTree() {
+    }
+    PathToTree.getType = function (name, fileName) {
+        if (name === fileName) {
+            return 'document';
+        }
+        return 'folder';
+    };
+    PathToTree.pathToTree = function (path, loadType) {
+        root = root || {
+            n: '',
+            u: '',
+            t: 'f',
+            lf: '',
+            cn: []
+        };
+        PathToTree.addPath(root, path, loadType);
+    };
+    PathToTree.addPath = function (root, path, loadType) {
+        var url = '';
+        var pathArr = path.split('/');
+        pathArr.forEach(function (name) {
+            var flag = true;
+            var children = root.cn;
+            url = "" + url + (url ? '/' : '') + name;
+            for (var i = 0; i < children.length; i++) {
+                var node = children[i];
+                if (node.n === name) {
+                    root = node;
+                    flag = false;
+                    break;
+                }
+            }
+            if (flag) {
+                var type = PathToTree.getType(name, pathArr[pathArr.length - 1]);
+                var newNode = {
+                    n: name,
+                    t: type === 'document' ? 'd' : 'f',
+                    // u: url,
+                    cn: []
+                };
+                if (type === 'document') {
+                    // 加载类型
+                    newNode.lf = loadType === types_1.LoadType.CREATE ? 'c' : 'l';
+                }
+                root.cn.push(newNode);
+                root = newNode;
+            }
+        });
+    };
+    return PathToTree;
+}());
+/**
+ * 写配置文件
+ */
 var writeResConfig = function () {
     timer && clearTimeout(timer);
     timer = setTimeout(function () {
-        var resconfigStr = Constants.exportStr + " " + JSON.stringify(resConfigObj);
+        var resconfigStr = Constants.EXPORT_STR + " " + JSON.stringify(root);
         writeDataToFile(buildCfg.outputPath + "/" + buildCfg.fileName, resconfigStr, false);
     }, 500);
 };
